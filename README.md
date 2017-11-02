@@ -17,7 +17,7 @@ Zepplin-solidity is following the best practicas of writing smart contracts(http
 
 This smart contract is specially designed to provide a limited emision of ERC20 (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md) standard tokens named **WEL** (**WEL Coin**) during pre-sale and main-sale periods of an ICO.
 
-![](https://bitbucket.org/nedudi/WEL/raw/master/ico-scheme.png)
+![](https://bitbucket.org/nedudi/WEL/raw/master/ico.png)
 
 -------
 

@@ -588,23 +588,50 @@ contract WelCoinCrowdsale is Ownable {
     TokenPurchase(msg.sender, beneficiary, weiAmount, bonusedTokens);
   }
 
-  // set new dates for pre-salev (emergency case)
-  function setPreSaleDates(uint256 _preSaleStartTime, uint256 _preSaleEndTime) public onlyOwner returns (bool) {
+ // set new dates for pre-salev (emergency case)
+  function setPreSaleParameters(uint256 _preSaleStartTime, uint256 _preSaleEndTime, uint256 _preSaleWeiCap, uint256 _preSaleBonus, uint256 _preSaleMinimumWei) public onlyOwner {
     require(!isFinalized);
     require(_preSaleStartTime < _preSaleEndTime);
+    require(_preSaleWeiCap > 0);
     preSaleStartTime = _preSaleStartTime;
     preSaleEndTime = _preSaleEndTime;
-    return true;
+    preSaleWeiCap = _preSaleWeiCap;
+    preSaleMinimumWei = _preSaleMinimumWei;
   }
 
   // set new dates for main-sale (emergency case)
-  function setMainSaleDates(uint256 _mainSaleStartTime, uint256 _mainSaleEndTime) public onlyOwner returns (bool) {
+  function setMainSaleParameters(uint256 _mainSaleStartTime, uint256 _mainSaleEndTime, uint256 _mainSaleWeiCap) public onlyOwner {
     require(!isFinalized);
     require(_mainSaleStartTime < _mainSaleEndTime);
+    require(_mainSaleWeiCap > 0);
     mainSaleStartTime = _mainSaleStartTime;
     mainSaleEndTime = _mainSaleEndTime;
-    return true;
+    mainSaleWeiCap = _mainSaleWeiCap;
   }
+
+  // set new wallets (emergency case)
+  function setWallets(address _wallet, address _tokenWallet) public onlyOwner {
+    require(!isFinalized);
+    require(_wallet != 0x0);
+    require(_tokenWallet != 0x0);
+    wallet = _wallet;
+    tokenWallet = _tokenWallet;
+  }
+
+  // set new rate (emergency case)
+  function setRate(uint256 _rate) public onlyOwner {
+    require(!isFinalized);
+    require(_rate > 0);
+    rate = _rate;
+  }
+
+  // set new goal (required when going from pre-sale to main sale)
+  function setGoal(uint256 _goal) public onlyOwner {
+    require(!isFinalized);
+    require(_goal > 0);
+    goal = _goal;
+  }
+
 
   // set token on pause
   function pauseToken() external onlyOwner {
@@ -615,6 +642,11 @@ contract WelCoinCrowdsale is Ownable {
   // unset token's pause
   function unpauseToken() external onlyOwner {
     WELToken(token).unpause();
+  }
+
+    // set token Ownership
+  function transferTokenOwnership(address newOwner) external onlyOwner {
+    WELToken(token).transferOwnership(newOwner);
   }
 
   // @return true if main sale event has ended
@@ -635,13 +667,6 @@ contract WelCoinCrowdsale is Ownable {
 
   // we want to be able to check all bonuses in already deployed contract
   // that's why we pass currentTime as a parameter instead of using "now"
-
-    // preSaleBonuses.push(Bonus({bonusEndTime: 3600 * 24 * 2,  timePercent: 20, bonusMinAmount: 8500 ether, amountPercent: 25}));
-    // preSaleBonuses.push(Bonus({bonusEndTime: 3600 * 24 * 4,  timePercent: 20, bonusMinAmount: 0, amountPercent: 0}));
-    // preSaleBonuses.push(Bonus({bonusEndTime: 3600 * 24 * 6,  timePercent: 15, bonusMinAmount: 0, amountPercent: 0}));
-    // preSaleBonuses.push(Bonus({bonusEndTime: 3600 * 24 * 7,  timePercent: 15, bonusMinAmount: 20000 ether, amountPercent: 10}));
-
-
 
   function getBonusPercent(uint256 tokens, uint256 currentTime) public constant returns (uint256 percent) {
     //require(currentTime >= preSaleStartTime);
