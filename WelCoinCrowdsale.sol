@@ -461,6 +461,8 @@ contract WelCoinCrowdsale is Ownable {
   Bonus[] public mainSaleBonuses;
 
   uint256 public preSaleMinimumWei;
+  uint256 public mainSaleMinimumWei;
+
   uint256 public defaultPercent;
 
   /**
@@ -498,10 +500,11 @@ contract WelCoinCrowdsale is Ownable {
     require(_wallet != 0x0);
     require(_tokenWallet != 0x0);
 
-    preSaleMinimumWei = 0;
+    preSaleMinimumWei = 300000000000000000;  // 0.3 Ether default minimum
+    mainSaleMinimumWei = 300000000000000000; // 0.3 Ether default minimum
     defaultPercent = 0;
 
-    tokenEmission = 75000000 ether;
+    tokenEmission = 150000000 ether;
 
     preSaleBonuses.push(Bonus({bonusEndTime: 3600 * 24 * 2, timePercent: 20, bonusMinAmount: 8500 ether, amountPercent: 25}));
     preSaleBonuses.push(Bonus({bonusEndTime: 3600 * 24 * 4, timePercent: 20, bonusMinAmount: 0, amountPercent: 0}));
@@ -594,22 +597,50 @@ contract WelCoinCrowdsale is Ownable {
   }
 
   // set new dates for pre-salev (emergency case)
-  function setPreSaleDates(uint256 _preSaleStartTime, uint256 _preSaleEndTime) public onlyOwner returns (bool) {
+  function setPreSaleParameters(uint256 _preSaleStartTime, uint256 _preSaleEndTime, uint256 _preSaleWeiCap, uint256 _preSaleMinimumWei) public onlyOwner {
     require(!isFinalized);
     require(_preSaleStartTime < _preSaleEndTime);
+    require(_preSaleWeiCap > 0);
     preSaleStartTime = _preSaleStartTime;
     preSaleEndTime = _preSaleEndTime;
-    return true;
+    preSaleWeiCap = _preSaleWeiCap;
+    preSaleMinimumWei = _preSaleMinimumWei;
   }
 
   // set new dates for main-sale (emergency case)
-  function setMainSaleDates(uint256 _mainSaleStartTime, uint256 _mainSaleEndTime) public onlyOwner returns (bool) {
+  function setMainSaleParameters(uint256 _mainSaleStartTime, uint256 _mainSaleEndTime, uint256 _mainSaleWeiCap, uint256 _mainSaleMinimumWei) public onlyOwner {
     require(!isFinalized);
     require(_mainSaleStartTime < _mainSaleEndTime);
+    require(_mainSaleWeiCap > 0);
     mainSaleStartTime = _mainSaleStartTime;
     mainSaleEndTime = _mainSaleEndTime;
-    return true;
+    mainSaleWeiCap = _mainSaleWeiCap;
+    mainSaleMinimumWei = _mainSaleMinimumWei;
   }
+
+  // set new wallets (emergency case)
+  function setWallets(address _wallet, address _tokenWallet) public onlyOwner {
+    require(!isFinalized);
+    require(_wallet != 0x0);
+    require(_tokenWallet != 0x0);
+    wallet = _wallet;
+    tokenWallet = _tokenWallet;
+  }
+
+    // set new rate (emergency case)
+  function setRate(uint256 _rate) public onlyOwner {
+    require(!isFinalized);
+    require(_rate > 0);
+    rate = _rate;
+  }
+
+      // set new goal (emergency case)
+  function setGoal(uint256 _goal) public onlyOwner {
+    require(!isFinalized);
+    require(_goal > 0);
+    goal = _goal;
+  }
+
 
   // set token on pause
   function pauseToken() external onlyOwner {
@@ -620,6 +651,11 @@ contract WelCoinCrowdsale is Ownable {
   // unset token's pause
   function unpauseToken() external onlyOwner {
     WELToken(token).unpause();
+  }
+
+  // set token Ownership
+  function transferTokenOwnership(address newOwner) external onlyOwner {
+    WELToken(token).transferOwnership(newOwner);
   }
 
   // @return true if main sale event has ended
@@ -713,7 +749,7 @@ contract WelCoinCrowdsale is Ownable {
   function finaliseCrowdsale() external onlyOwner returns (bool) {
     require(!isFinalized);
     uint256 totalSupply = token.totalSupply();
-    uint256 minterBenefit = tokenEmission.mul(2).div(100);
+    uint256 minterBenefit = tokenEmission.sub(totalSupply);
     if (goalReached()) {
       token.mint(tokenWallet, minterBenefit);
       vault.close();
